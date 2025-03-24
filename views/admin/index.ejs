@@ -1,1 +1,180 @@
 <h3>Sign In</h3>
+
+<div id="message" class="message"></div>
+
+<form id="loginForm">
+  <label for="username"><b>Username</b></label>
+  <input type="text" placeholder="Enter Username" name="username" id="username" required>
+
+  <label for="password"><b>Password</b></label>
+  <input type="password" placeholder="Enter Password" name="password" id="password" required>
+
+  <button type="submit" class="btn">Login</button>
+</form>
+
+<h3>Register</h3>
+<div id="registerMessage" class="message"></div>
+<form id="registerForm">
+  <label for="reg-username"><b>Username</b></label>
+  <input type="text" placeholder="Enter Username" name="username" id="reg-username" required>
+
+  <label for="reg-password"><b>Password</b></label>
+  <input type="password" placeholder="Enter Password" name="password" id="reg-password" required>
+
+  <button type="submit" class="btn">Register</button>
+</form>
+
+<style>
+.message {
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  display: none;
+}
+
+.message.error {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+  display: block;
+}
+
+.message.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  display: block;
+}
+
+form {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background-color: #5A3D9A;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #4A2F8A;
+}
+
+h3 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+}
+</style>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const messageDiv = document.getElementById('message');
+  const submitButton = e.target.querySelector('button[type="submit"]');
+  
+  try {
+    // Disable the submit button and show loading state
+    submitButton.disabled = true;
+    submitButton.textContent = 'Logging in...';
+    messageDiv.className = 'message';
+    
+    if (!username || !password) {
+      messageDiv.textContent = 'Username and password are required';
+      messageDiv.className = 'message error';
+      return;
+    }
+
+    const response = await fetch('/admin', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      messageDiv.textContent = 'Login successful. Redirecting...';
+      messageDiv.className = 'message success';
+      window.location.href = '/dashboard';
+    } else {
+      messageDiv.textContent = data.message || 'Login failed. Please check your credentials.';
+      messageDiv.className = 'message error';
+      submitButton.disabled = false;
+      submitButton.textContent = 'Login';
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    messageDiv.textContent = 'An error occurred during login. Please try again.';
+    messageDiv.className = 'message error';
+    submitButton.disabled = false;
+    submitButton.textContent = 'Login';
+  }
+});
+
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('reg-username').value;
+  const password = document.getElementById('reg-password').value;
+  const messageDiv = document.getElementById('registerMessage');
+  
+  try {
+    messageDiv.className = 'message';
+    
+    if (!username || !password) {
+      messageDiv.textContent = 'Username and password are required';
+      messageDiv.className = 'message error';
+      return;
+    }
+
+    const response = await fetch('/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    });
+    
+    const data = await response.json();
+    messageDiv.textContent = data.message;
+    messageDiv.className = response.ok ? 'message success' : 'message error';
+    
+    if (response.ok) {
+      document.getElementById('registerForm').reset();
+      // Show success message with login prompt
+      messageDiv.textContent = 'Registration successful! You can now login.';
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    messageDiv.textContent = 'An error occurred during registration';
+    messageDiv.className = 'message error';
+  }
+});
+</script>

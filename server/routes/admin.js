@@ -4,9 +4,11 @@ const Post = require('../models/Post');
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 const adminLayout = '../views/layouts/admin';
-const jwtSecret = process.env.JWT_SECRET;
+const jwtSecret = process.env.JWT_SECRET || 'keyboard cat';
+const uri="mongodb://localhost:27017/testdb";
 
 
 /**
@@ -44,6 +46,7 @@ router.get('/admin', async (req, res) => {
     res.render('admin/index', { locals, layout: adminLayout });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ message: 'Error loading admin page' });
   }
 });
 
@@ -56,24 +59,40 @@ router.post('/admin', async (req, res) => {
   try {
     const { username, password } = req.body;
     
-    const user = await User.findOne( { username } );
-
-    if(!user) {
-      return res.status(401).json( { message: 'Invalid credentials' } );
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
     }
 
+    // Find user in database
+    const user = await User.findOne({ username }).exec();
+    
+    if (!user) {
+      console.log('User not found:', username);
+      return res.status(401).json({ message: 'Invalid username or password' });
+    }
+
+    // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if(!isPasswordValid) {
-      return res.status(401).json( { message: 'Invalid credentials' } );
+    
+    if (!isPasswordValid) {
+      console.log('Invalid password for user:', username);
+      return res.status(401).json({ message: 'Invalid username or password' });
     }
 
-    const token = jwt.sign({ userId: user._id}, jwtSecret );
-    res.cookie('token', token, { httpOnly: true });
-    res.redirect('/dashboard');
+    // Create and set JWT token
+    const token = jwt.sign({ userId: user._id }, jwtSecret);
+    res.cookie('token', token, { 
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    });
+
+    console.log('Login successful for user:', username);
+    res.status(200).json({ message: 'Login successful' });
 
   } catch (error) {
-    console.log(error);
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Error during login. Please try again.' });
   }
 });
 
@@ -223,20 +242,32 @@ router.put('/edit-post/:id', authMiddleware, async (req, res) => {
 router.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
 
-    try {
-      const user = await User.create({ username, password:hashedPassword });
-      res.status(201).json({ message: 'User Created', user });
-    } catch (error) {
-      if(error.code === 11000) {
-        res.status(409).json({ message: 'User already in use'});
-      }
-      res.status(500).json({ message: 'Internal server error'})
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
     }
 
+    // Check if user already exists
+    const existingUser = await User.findOne({ username }).exec();
+    
+    if (existingUser) {
+      console.log('Registration failed - username exists:', username);
+      return res.status(409).json({ message: 'Username already exists' });
+    }
+
+    // Create new user
+    const user = new User({ username, password });
+    await user.save();
+
+    console.log('Registration successful for user:', username);
+    res.status(201).json({ message: 'Registration successful! You can now login.' });
+
   } catch (error) {
-    console.log(error);
+    console.error('Registration error:', error);
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'Username already exists' });
+    }
+    res.status(500).json({ message: 'Error during registration. Please try again.' });
   }
 });
 
