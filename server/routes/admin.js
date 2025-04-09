@@ -326,9 +326,13 @@ router.delete('/delete-post/:id', authMiddleware, async (req, res) => {
  * Admin Logout
 */
 router.get('/logout', (req, res) => {
-  res.clearCookie('token');
-  //res.json({ message: 'Logout successful.'});
-  res.redirect('/');
+  try {
+    res.clearCookie('token');
+    res.redirect('/admin');
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Error during logout' });
+  }
 });
 
 
