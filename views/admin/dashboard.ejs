@@ -4,6 +4,7 @@
   <div class="admin-main">
     <div class="admin-header">
       <h2>Welcome to Dashboard</h2>
+      <a href="/admin/add-post" class="btn btn-add">Add New Post</a>
     </div>
 
     <div class="admin-posts">
@@ -18,8 +19,8 @@
               </div>
               <div class="post-actions">
                 <a href="/post/<%= post._id %>" class="btn btn-view">View</a>
-                <a href="/edit-post/<%= post._id %>" class="btn btn-edit">Edit</a>
-                <form action="/delete-post/<%= post._id %>?_method=DELETE" method="POST">
+                <a href="/admin/edit-post/<%= post._id %>" class="btn btn-edit">Edit</a>
+                <form action="/admin/delete-post/<%= post._id %>?_method=DELETE" method="POST">
                   <button type="submit" class="btn btn-delete">Delete</button>
                 </form>
               </div>
@@ -117,6 +118,20 @@
 .btn-delete {
   background-color: #dc3545;
   color: white;
+}
+
+.btn-add {
+  background-color: #28a745;
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-left: 1rem;
+}
+
+.btn-add:hover {
+  opacity: 0.9;
 }
 
 .btn:hover {

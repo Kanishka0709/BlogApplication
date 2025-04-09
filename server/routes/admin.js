@@ -197,11 +197,10 @@ router.post('/add-post', authMiddleware, async (req, res) => {
 
 /**
  * GET /
- * Admin - Create New Post
+ * Admin - Edit Post
 */
 router.get('/edit-post/:id', authMiddleware, async (req, res) => {
   try {
-
     const locals = {
       title: "Edit Post",
       description: "Free NodeJs User Management System",
@@ -218,29 +217,26 @@ router.get('/edit-post/:id', authMiddleware, async (req, res) => {
   } catch (error) {
     console.log(error);
   }
-
 });
 
 
 /**
  * PUT /
- * Admin - Create New Post
+ * Admin - Update Post
 */
 router.put('/edit-post/:id', authMiddleware, async (req, res) => {
   try {
-
     await Post.findByIdAndUpdate(req.params.id, {
       title: req.body.title,
       body: req.body.body,
       updatedAt: Date.now()
     });
 
-    res.redirect(`/edit-post/${req.params.id}`);
+    res.redirect('/admin/dashboard');
 
   } catch (error) {
     console.log(error);
   }
-
 });
 
 
@@ -316,14 +312,12 @@ router.post('/register', async (req, res) => {
  * Admin - Delete Post
 */
 router.delete('/delete-post/:id', authMiddleware, async (req, res) => {
-
   try {
-    await Post.deleteOne( { _id: req.params.id } );
-    res.redirect('/dashboard');
+    await Post.deleteOne({ _id: req.params.id });
+    res.redirect('/admin/dashboard');
   } catch (error) {
     console.log(error);
   }
-
 });
 
 
