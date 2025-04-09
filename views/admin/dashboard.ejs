@@ -1,0 +1,125 @@
+<%- include('../partials/header_admin.ejs') %>
+
+<div class="admin-container">
+  <div class="admin-main">
+    <div class="admin-header">
+      <h2>Welcome to Dashboard</h2>
+    </div>
+
+    <div class="admin-posts">
+      <h3>Recent Posts</h3>
+      <% if (data.length > 0) { %>
+        <ul class="post-list">
+          <% data.forEach(post => { %>
+            <li>
+              <div class="post-info">
+                <h4><%= post.title %></h4>
+                <p class="post-date">Created: <%= new Date(post.createdAt).toLocaleDateString() %></p>
+              </div>
+              <div class="post-actions">
+                <a href="/post/<%= post._id %>" class="btn btn-view">View</a>
+                <a href="/edit-post/<%= post._id %>" class="btn btn-edit">Edit</a>
+                <form action="/delete-post/<%= post._id %>?_method=DELETE" method="POST">
+                  <button type="submit" class="btn btn-delete">Delete</button>
+                </form>
+              </div>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <p>No posts found.</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<style>
+.admin-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.admin-header {
+  margin-bottom: 2rem;
+}
+
+.admin-header h2 {
+  color: var(--primary);
+  font-size: 2rem;
+}
+
+.admin-posts {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-posts h3 {
+  margin-bottom: 1.5rem;
+  color: var(--text-dark);
+}
+
+.post-list {
+  list-style: none;
+  padding: 0;
+}
+
+.post-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.post-list li:last-child {
+  border-bottom: none;
+}
+
+.post-info h4 {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 1.1rem;
+}
+
+.post-date {
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0 0;
+}
+
+.post-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-view {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-edit {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+</style>

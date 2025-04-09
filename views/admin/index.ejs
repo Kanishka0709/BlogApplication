@@ -99,7 +99,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const submitButton = e.target.querySelector('button[type="submit"]');
   
   try {
-    // Disable the submit button and show loading state
     submitButton.disabled = true;
     submitButton.textContent = 'Logging in...';
     messageDiv.className = 'message';
@@ -107,6 +106,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     if (!username || !password) {
       messageDiv.textContent = 'Username and password are required';
       messageDiv.className = 'message error';
+      submitButton.disabled = false;
+      submitButton.textContent = 'Login';
       return;
     }
 
@@ -123,7 +124,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     if (response.ok) {
       messageDiv.textContent = 'Login successful. Redirecting...';
       messageDiv.className = 'message success';
-      window.location.href = '/dashboard';
+      window.location.href = data.redirectUrl;
     } else {
       messageDiv.textContent = data.message || 'Login failed. Please check your credentials.';
       messageDiv.className = 'message error';

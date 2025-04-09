@@ -55,44 +55,69 @@ router.get('/admin', async (req, res) => {
  * POST /
  * Admin - Check Login
 */
-router.post('/admin', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
+    // console.log('Login attempt received:', { username: req.body.username });
     const { username, password } = req.body;
-    
+    console.log(username,password);
+    // Check MongoDB connection state
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected. Current state:', mongoose.connection.readyState);
+      return res.status(500).json({ message: 'Database connection error. Please try again.' });
+    }
+
     if (!username || !password) {
+      console.log('Missing credentials');
       return res.status(400).json({ message: 'Username and password are required' });
     }
 
     // Find user in database
-    const user = await User.findOne({ username }).exec();
+    console.log('Searching for user in database...');
+    const user = await User.findOne({ username: username.trim() }).exec();
     
     if (!user) {
       console.log('User not found:', username);
       return res.status(401).json({ message: 'Invalid username or password' });
     }
 
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    
-    if (!isPasswordValid) {
+    console.log('User found, verifying password...');
+    // Verify password
+    const isValid =  user.isValidPassword(password);
+    console.log("asdf" ,isValid)
+    if (!isValid) {
       console.log('Invalid password for user:', username);
       return res.status(401).json({ message: 'Invalid username or password' });
     }
 
-    // Create and set JWT token
-    const token = jwt.sign({ userId: user._id }, jwtSecret);
-    res.cookie('token', token, { 
+    console.log('Password verified, creating token...');
+    // Create JWT token
+    const token = jwt.sign(
+      { userId: user._id, username: user.username },
+      jwtSecret,
+      { expiresIn: '1h' }
+    );
+
+    // Set cookie and send response
+    res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      sameSite: 'strict',
+      maxAge: 3600000 // 1 hour
     });
 
     console.log('Login successful for user:', username);
-    res.status(200).json({ message: 'Login successful' });
+    res.status(200).json({
+      message: 'Login successful',
+      redirectUrl: '/admin/dashboard'
+    });
 
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ message: 'Error during login. Please try again.' });
+    console.error('Login error details:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ 
+      message: 'An error occurred during login. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -241,33 +266,47 @@ router.put('/edit-post/:id', authMiddleware, async (req, res) => {
 */
 router.post('/register', async (req, res) => {
   try {
+    console.log('Registration attempt received:', { username: req.body.username });
     const { username, password } = req.body;
 
     if (!username || !password) {
+      console.log('Missing registration credentials');
       return res.status(400).json({ message: 'Username and password are required' });
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ username }).exec();
+    // Check if user exists
+    console.log('Checking if user exists...');
+    const existingUser = await User.findOne({ username: username.trim() }).exec();
     
     if (existingUser) {
-      console.log('Registration failed - username exists:', username);
+      console.log('Username already exists:', username);
       return res.status(409).json({ message: 'Username already exists' });
     }
 
     // Create new user
-    const user = new User({ username, password });
-    await user.save();
+    console.log('Creating new user...');
+    const user = new User({
+      username: username.trim(),
+      password: password
+    });
 
-    console.log('Registration successful for user:', username);
+    await user.save();
+    console.log('User created successfully:', username);
+
     res.status(201).json({ message: 'Registration successful! You can now login.' });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error details:', error);
+    console.error('Stack trace:', error.stack);
+    
     if (error.code === 11000) {
       return res.status(409).json({ message: 'Username already exists' });
     }
-    res.status(500).json({ message: 'Error during registration. Please try again.' });
+    
+    res.status(500).json({ 
+      message: 'Error during registration. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
